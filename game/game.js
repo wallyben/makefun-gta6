@@ -15,7 +15,7 @@ const missions=[
 ];
 function rnd(a,b){return a+Math.random()*(b-a)}function clamp(n,a,b){return Math.max(a,Math.min(b,n))}function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}function norm(a){return Math.atan2(Math.sin(a),Math.cos(a))}
 function road(x,y){return Math.abs(((x+TILE/2)%TILE+TILE)%TILE-TILE/2)<ROAD/2||Math.abs(((y+TILE/2)%TILE+TILE)%TILE-TILE/2)<ROAD/2}
-function buildingCollision(x,y,radius=9){const dx=Math.abs(((x+TILE/2)%TILE+TILE)%TILE-TILE/2),dy=Math.abs(((y+TILE/2)%TILE+TILE)%TILE-TILE/2);return dx<74+radius&&dy<74+radius}
+function buildingCollision(x,y,radius=9){const dx=Math.abs(((x+TILE/2)%TILE+TILE)%TILE-TILE/2),dy=Math.abs(((y+TILE/2)%TILE+TILE)%TILE-TILE/2);return dx>ROAD/2-radius&&dx<84+radius&&dy>ROAD/2-radius&&dy<84+radius}
 function nearestSafe(x,y,radius=9){if(!buildingCollision(x,y,radius))return {x,y};const ix=Math.round(x/TILE)*TILE,iy=Math.round(y/TILE)*TILE;const candidates=[{x:ix,y},{x,y:iy},{x:ix,y:iy}];candidates.sort((a,b)=>(a.x-x)**2+(a.y-y)**2-((b.x-x)**2+(b.y-y)**2));return candidates.find(p=>!buildingCollision(p.x,p.y,radius))||{x:ix,y:iy}}
 function canMove(x,y,radius){return !buildingCollision(x,y,radius)&&Math.abs(x)<=WORLD&&Math.abs(y)<=WORLD}
 function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=window.innerWidth;H=window.innerHeight;canvas.width=Math.floor(W*DPR);canvas.height=Math.floor(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0)}
