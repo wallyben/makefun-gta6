@@ -21,4 +21,5 @@ jobs:
           test -f LICENSE
           node --check game/game.js
           node --check game.js
+          node --test tests/*.test.mjs
           node -e "const fs=require('fs');const h=fs.readFileSync('game/index.html','utf8');if(!h.includes('./game.js')||!h.includes('id=\"world\"'))process.exit(1)"
