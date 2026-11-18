@@ -4,6 +4,7 @@ const $=id=>document.getElementById(id),keys=new Set(),TILE=240,ROAD=72,WORLD=8*
 let W=0,H=0,DPR=1,playing=false,paused=false,last=0,clock=0,toastUntil=0,mission=0,missionProgress=0,missionTimer=0,saveTimer=0;
 const player={x:0,y:0,a:0,hp:100,money:500,wanted:0,heat:0,vehicle:null,invulnerable:0};
 const camera={x:0,y:0};const cars=[],people=[],police=[],sparks=[];
+const START={x:0,y:0};
 const missions=[
  {title:'THE FIRST RUN',text:'Find a parked car and press E to take the wheel.',type:'enter',reward:400},
  {title:'HOT DELIVERY',text:'Drive to the amber waypoint on the east side of the city.',type:'drive',x:1440,y:480,reward:1200},
@@ -15,31 +16,38 @@ const missions=[
 function rnd(a,b){return a+Math.random()*(b-a)}function clamp(n,a,b){return Math.max(a,Math.min(b,n))}function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}function norm(a){return Math.atan2(Math.sin(a),Math.cos(a))}
 function road(x,y){return Math.abs(((x+TILE/2)%TILE+TILE)%TILE-TILE/2)<ROAD/2||Math.abs(((y+TILE/2)%TILE+TILE)%TILE-TILE/2)<ROAD/2}
 function buildingCollision(x,y,radius=9){const dx=Math.abs(((x+TILE/2)%TILE+TILE)%TILE-TILE/2),dy=Math.abs(((y+TILE/2)%TILE+TILE)%TILE-TILE/2);return dx<74+radius&&dy<74+radius}
+function nearestSafe(x,y,radius=9){if(!buildingCollision(x,y,radius))return {x,y};const ix=Math.round(x/TILE)*TILE,iy=Math.round(y/TILE)*TILE;const candidates=[{x:ix,y},{x,y:iy},{x:ix,y:iy}];candidates.sort((a,b)=>(a.x-x)**2+(a.y-y)**2-((b.x-x)**2+(b.y-y)**2));return candidates.find(p=>!buildingCollision(p.x,p.y,radius))||{x:ix,y:iy}}
+function canMove(x,y,radius){return !buildingCollision(x,y,radius)&&Math.abs(x)<=WORLD&&Math.abs(y)<=WORLD}
 function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=window.innerWidth;H=window.innerHeight;canvas.width=Math.floor(W*DPR);canvas.height=Math.floor(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0)}
 addEventListener('resize',resize);resize();
 function makeCar(x,y,a,color,ai=false){return {x,y,a,s:0,color,ai,stolen:false,hp:100,police:false,phase:rnd(0,100),turn:0}}
 const palette=['#ed706c','#4cc7b7','#d4a1ee','#f0b657','#c8d4e3','#4d82e8','#7bd16e'];
 for(let i=0;i<70;i++){const x=Math.floor(rnd(-8,8))*TILE,y=Math.floor(rnd(-8,8))*TILE;if(Math.random()<.5)cars.push(makeCar(x+rnd(-20,20),rnd(-WORLD,WORLD),Math.random()<.5?0:Math.PI,palette[i%palette.length],true));else cars.push(makeCar(rnd(-WORLD,WORLD),y+rnd(-20,20),Math.random()<.5?Math.PI/2:-Math.PI/2,palette[i%palette.length],true))}
+// Accessible parked cars make the opening objective completable without chasing traffic.
+for(const [x,y,a] of [[0,115,Math.PI/2],[0,-115,-Math.PI/2],[115,0,0],[-115,0,Math.PI]])cars.push(makeCar(x,y,a,palette[cars.length%palette.length],false));
 for(let i=0;i<95;i++){let x=rnd(-WORLD,WORLD),y=rnd(-WORLD,WORLD);if(road(x,y)){x+=65;y+=65}people.push({x,y,tx:x+rnd(-80,80),ty:y+rnd(-80,80),color:palette[i%palette.length],phase:rnd(0,10),speed:rnd(13,30)})}
 function notify(t){$('toast').textContent=t;$('toast').style.opacity=1;toastUntil=clock+2.6}
 function advance(){const m=missions[mission%missions.length];player.money+=m.reward;notify('CONTRACT COMPLETE  +$'+m.reward);mission++;missionProgress=0;missionTimer=0;save()}
 function save(){try{localStorage.setItem('neonCountySaveV1',JSON.stringify({x:player.x,y:player.y,money:player.money,hp:player.hp,wanted:player.wanted,mission}))}catch{}}
-function load(){try{const d=JSON.parse(localStorage.getItem('neonCountySaveV1')||'null');if(!d)return false;for(const k of ['x','y','money','hp','wanted'])if(Number.isFinite(d[k]))player[k]=d[k];mission=Number.isInteger(d.mission)?Math.max(0,d.mission):0;return true}catch{return false}}
-function start(restore){if(restore){if(!load())notify('NO SAVE FOUND — NEW GAME')}else{Object.assign(player,{x:0,y:0,a:0,hp:100,money:500,wanted:0,heat:0,vehicle:null,invulnerable:0});mission=0;missionTimer=0;missionProgress=0;police.length=0;save()}$('menu').hidden=true;paused=false;playing=true;last=performance.now();requestAnimationFrame(frame)}
+function load(){try{const d=JSON.parse(localStorage.getItem('neonCountySaveV1')||'null');if(!d)return false;for(const k of ['x','y','money','hp','wanted'])if(Number.isFinite(d[k]))player[k]=d[k];mission=Number.isInteger(d.mission)?Math.max(0,d.mission):0;const safe=nearestSafe(player.x,player.y);player.x=safe.x;player.y=safe.y;return true}catch{return false}}
+function start(restore){if(restore){if(!load())notify('NO SAVE FOUND — NEW GAME')}else{Object.assign(player,{x:START.x,y:START.y,a:0,hp:100,money:500,wanted:0,heat:0,vehicle:null,invulnerable:0});mission=0;missionTimer=0;missionProgress=0;police.length=0;save()}$('menu').hidden=true;paused=false;playing=true;last=performance.now();requestAnimationFrame(frame)}
 $('start').onclick=()=>start(false);$('resume').onclick=()=>start(true);
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys.add(k);if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(!playing)return;if(k==='e'&&!e.repeat)interact();if(k==='p'&&!e.repeat){save();notify('GAME SAVED')}if(k==='escape'&&!e.repeat){paused=!paused;$('pause').hidden=!paused;if(!paused)last=performance.now()}});addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
-function interact(){if(player.vehicle){const v=player.vehicle;player.x=v.x+Math.cos(v.a)*28;player.y=v.y+Math.sin(v.a)*28;player.vehicle=null;notify('ON FOOT');return}let nearest=null,best=48;for(const c of cars){const d=dist(player,c);if(d<best){best=d;nearest=c}}if(!nearest){notify('GET CLOSER TO A VEHICLE');return}player.vehicle=nearest;nearest.ai=false;nearest.stolen=true;player.x=nearest.x;player.y=nearest.y;player.a=nearest.a;player.wanted=Math.max(1,player.wanted);player.heat=40;notify('VEHICLE TAKEN  ·  WANTED');if(mission%missions.length===0)advance()}
-function hit(damage){if(player.invulnerable>0)return;player.hp-=damage;player.invulnerable=1.3;sparks.push({x:player.x,y:player.y,life:.5});if(player.hp<=0){player.hp=100;player.x=0;player.y=0;player.vehicle=null;player.money=Math.max(0,player.money-500);player.wanted=0;police.length=0;notify('WASTED  ·  HOSPITAL FEE $500')}}
+function interact(){if(player.vehicle){const v=player.vehicle;const offsets=[{x:v.x+Math.cos(v.a)*28,y:v.y+Math.sin(v.a)*28},{x:v.x-Math.cos(v.a)*28,y:v.y-Math.sin(v.a)*28},{x:v.x+Math.sin(v.a)*30,y:v.y-Math.cos(v.a)*30}];const exit=offsets.find(p=>canMove(p.x,p.y,7));if(!exit){notify('NO SAFE PLACE TO EXIT');return}player.x=exit.x;player.y=exit.y;player.vehicle=null;notify('ON FOOT');return}let nearest=null,best=48;for(const c of cars){const d=dist(player,c);if(d<best){best=d;nearest=c}}if(!nearest){notify('GET CLOSER TO A VEHICLE');return}player.vehicle=nearest;nearest.ai=false;nearest.stolen=true;player.x=nearest.x;player.y=nearest.y;player.a=nearest.a;player.wanted=Math.max(1,player.wanted);player.heat=40;notify('VEHICLE TAKEN  ·  WANTED');if(mission%missions.length===0)advance()}
+function hit(damage){if(player.invulnerable>0)return;player.hp-=damage;player.invulnerable=1.3;sparks.push({x:player.x,y:player.y,life:.5});if(player.hp<=0){player.hp=100;player.x=START.x;player.y=START.y;player.vehicle=null;player.money=Math.max(0,player.money-500);player.wanted=0;police.length=0;notify('WASTED  ·  HOSPITAL FEE $500')}}
 function update(dt){clock+=dt;player.invulnerable=Math.max(0,player.invulnerable-dt);const oldX=player.x,oldY=player.y;
 const up=keys.has('w')||keys.has('arrowup'),down=keys.has('s')||keys.has('arrowdown'),left=keys.has('a')||keys.has('arrowleft'),right=keys.has('d')||keys.has('arrowright');
 if(player.vehicle){const c=player.vehicle;c.s=clamp(c.s+(up?320*dt:0)-(down?260*dt:0),-135,430);c.s*=Math.exp(-(keys.has(' ')?4.8:.75)*dt);c.a+=(right?1:0)*c.s*dt/100-(left?1:0)*c.s*dt/100;c.x+=Math.sin(c.a)*c.s*dt;c.y-=Math.cos(c.a)*c.s*dt;player.x=c.x;player.y=c.y;player.a=c.a;
 if(Math.abs(c.s)>260&&Math.random()<dt*.8)sparks.push({x:c.x,y:c.y,life:.3})}
 else{const speed=keys.has('shift')?205:130;const dx=(right?1:0)-(left?1:0),dy=(down?1:0)-(up?1:0),len=Math.hypot(dx,dy)||1;player.x+=dx/len*speed*dt;player.y+=dy/len*speed*dt;if(dx||dy)player.a=Math.atan2(dx,-dy);if(keys.has(' ')&&Math.random()<dt*3){for(const p of police)if(dist(p,player)<60){p.hp-=25;player.wanted=Math.max(2,player.wanted);player.heat=40;sparks.push({x:p.x,y:p.y,life:.5})}}}
 player.x=clamp(player.x,-WORLD,WORLD);player.y=clamp(player.y,-WORLD,WORLD);
+// Keep vehicle position synchronized with world bounds, preventing camera/vehicle divergence.
+if(player.vehicle){player.vehicle.x=player.x;player.vehicle.y=player.y}
 if(buildingCollision(player.x,player.y,player.vehicle?12:7)){
  if(player.vehicle){const c=player.vehicle;c.x=oldX;c.y=oldY;if(Math.abs(c.s)>95){hit(Math.min(24,Math.abs(c.s)*.055));sparks.push({x:oldX,y:oldY,life:.5})}c.s*=-.22}
  player.x=oldX;player.y=oldY;
 }
+if(player.vehicle){player.vehicle.x=player.x;player.vehicle.y=player.y}
 for(const c of cars){if(!c.ai||dist(c,player)>950)continue;c.phase+=dt;c.s=clamp(c.s+dt*80,0,105);c.x+=Math.sin(c.a)*c.s*dt;c.y-=Math.cos(c.a)*c.s*dt;
 if(Math.abs(c.x)>WORLD||Math.abs(c.y)>WORLD){c.x=clamp(-c.x,-WORLD,WORLD);c.y=clamp(-c.y,-WORLD,WORLD);c.a+=Math.PI}
 if(Math.abs(((c.x+TILE/2)%TILE+TILE)%TILE-TILE/2)<4&&Math.abs(((c.y+TILE/2)%TILE+TILE)%TILE-TILE/2)<4&&Math.random()<.15){c.a+=Math.random()<.5?Math.PI/2:-Math.PI/2}
