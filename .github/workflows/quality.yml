@@ -14,6 +14,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run checks
+      - name: Verify offline game and scripts
         run: |
-          test -f index.html && node --check game.js
+          test -f game/index.html
+          test -f game/game.js
+          test -f LICENSE
+          node --check game/game.js
+          node --check game.js
+          node -e "const fs=require('fs');const h=fs.readFileSync('game/index.html','utf8');if(!h.includes('./game.js')||!h.includes('id=\"world\"'))process.exit(1)"
