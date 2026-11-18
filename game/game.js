@@ -2,7 +2,7 @@
 const canvas=document.getElementById('world'),ctx=canvas.getContext('2d'),mini=document.getElementById('mini'),mc=mini.getContext('2d');
 const $=id=>document.getElementById(id),keys=new Set(),TILE=240,ROAD=72,WORLD=8*TILE;
 let W=0,H=0,DPR=1,playing=false,paused=false,last=0,clock=0,toastUntil=0,mission=0,missionProgress=0,missionTimer=0,saveTimer=0;
-const player={x:40,y:40,a:0,hp:100,money:500,wanted:0,heat:0,vehicle:null,invulnerable:0};
+const player={x:0,y:0,a:0,hp:100,money:500,wanted:0,heat:0,vehicle:null,invulnerable:0};
 const camera={x:0,y:0};const cars=[],people=[],police=[],sparks=[];
 const missions=[
  {title:'THE FIRST RUN',text:'Find a parked car and press E to take the wheel.',type:'enter',reward:400},
@@ -25,11 +25,11 @@ function notify(t){$('toast').textContent=t;$('toast').style.opacity=1;toastUnti
 function advance(){const m=missions[mission%missions.length];player.money+=m.reward;notify('CONTRACT COMPLETE  +$'+m.reward);mission++;missionProgress=0;missionTimer=0;save()}
 function save(){try{localStorage.setItem('neonCountySaveV1',JSON.stringify({x:player.x,y:player.y,money:player.money,hp:player.hp,wanted:player.wanted,mission}))}catch{}}
 function load(){try{const d=JSON.parse(localStorage.getItem('neonCountySaveV1')||'null');if(!d)return false;for(const k of ['x','y','money','hp','wanted'])if(Number.isFinite(d[k]))player[k]=d[k];mission=Number.isInteger(d.mission)?Math.max(0,d.mission):0;return true}catch{return false}}
-function start(restore){if(restore){if(!load())notify('NO SAVE FOUND — NEW GAME')}else{Object.assign(player,{x:40,y:40,a:0,hp:100,money:500,wanted:0,heat:0,vehicle:null,invulnerable:0});mission=0;missionTimer=0;missionProgress=0;police.length=0;save()}$('menu').hidden=true;paused=false;playing=true;last=performance.now();requestAnimationFrame(frame)}
+function start(restore){if(restore){if(!load())notify('NO SAVE FOUND — NEW GAME')}else{Object.assign(player,{x:0,y:0,a:0,hp:100,money:500,wanted:0,heat:0,vehicle:null,invulnerable:0});mission=0;missionTimer=0;missionProgress=0;police.length=0;save()}$('menu').hidden=true;paused=false;playing=true;last=performance.now();requestAnimationFrame(frame)}
 $('start').onclick=()=>start(false);$('resume').onclick=()=>start(true);
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys.add(k);if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(!playing)return;if(k==='e'&&!e.repeat)interact();if(k==='p'&&!e.repeat){save();notify('GAME SAVED')}if(k==='escape'&&!e.repeat){paused=!paused;$('pause').hidden=!paused;if(!paused)last=performance.now()}});addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 function interact(){if(player.vehicle){const v=player.vehicle;player.x=v.x+Math.cos(v.a)*28;player.y=v.y+Math.sin(v.a)*28;player.vehicle=null;notify('ON FOOT');return}let nearest=null,best=48;for(const c of cars){const d=dist(player,c);if(d<best){best=d;nearest=c}}if(!nearest){notify('GET CLOSER TO A VEHICLE');return}player.vehicle=nearest;nearest.ai=false;nearest.stolen=true;player.x=nearest.x;player.y=nearest.y;player.a=nearest.a;player.wanted=Math.max(1,player.wanted);player.heat=40;notify('VEHICLE TAKEN  ·  WANTED');if(mission%missions.length===0)advance()}
-function hit(damage){if(player.invulnerable>0)return;player.hp-=damage;player.invulnerable=1.3;sparks.push({x:player.x,y:player.y,life:.5});if(player.hp<=0){player.hp=100;player.x=40;player.y=40;player.vehicle=null;player.money=Math.max(0,player.money-500);player.wanted=0;police.length=0;notify('WASTED  ·  HOSPITAL FEE $500')}}
+function hit(damage){if(player.invulnerable>0)return;player.hp-=damage;player.invulnerable=1.3;sparks.push({x:player.x,y:player.y,life:.5});if(player.hp<=0){player.hp=100;player.x=0;player.y=0;player.vehicle=null;player.money=Math.max(0,player.money-500);player.wanted=0;police.length=0;notify('WASTED  ·  HOSPITAL FEE $500')}}
 function update(dt){clock+=dt;player.invulnerable=Math.max(0,player.invulnerable-dt);const oldX=player.x,oldY=player.y;
 const up=keys.has('w')||keys.has('arrowup'),down=keys.has('s')||keys.has('arrowdown'),left=keys.has('a')||keys.has('arrowleft'),right=keys.has('d')||keys.has('arrowright');
 if(player.vehicle){const c=player.vehicle;c.s=clamp(c.s+(up?320*dt:0)-(down?260*dt:0),-135,430);c.s*=Math.exp(-(keys.has(' ')?4.8:.75)*dt);c.a+=(right?1:0)*c.s*dt/100-(left?1:0)*c.s*dt/100;c.x+=Math.sin(c.a)*c.s*dt;c.y-=Math.cos(c.a)*c.s*dt;player.x=c.x;player.y=c.y;player.a=c.a;
