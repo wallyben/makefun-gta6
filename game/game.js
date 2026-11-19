@@ -61,7 +61,7 @@ for(let i=sparks.length-1;i>=0;i--){sparks[i].life-=dt;if(sparks[i].life<=0)spar
 camera.x+=(player.x-camera.x)*Math.min(1,dt*5);camera.y+=(player.y-camera.y)*Math.min(1,dt*5);
 saveTimer+=dt;if(saveTimer>20){saveTimer=0;save()}
 $('cash').textContent='$ '+Math.floor(player.money).toLocaleString();$('wanted').textContent='★'.repeat(player.wanted)+'☆'.repeat(5-player.wanted);$('wanted').style.color=player.wanted?'#ffae62':'#b9c9d8';
-$('mission').textContent=m.text+(m.type==='escape'&&!missionProgress?'  ·  ATTRACT POLICE ATTENTION FIRST':'')+'  ·  REWARD ;$('status').textContent='HEALTH · '+Math.ceil(player.hp)+(player.vehicle?'   |   SPEED '+Math.floor(Math.abs(player.vehicle.s)/4):'   |   ON FOOT');
+$('mission').textContent=m.text+(m.type==='escape'&&!missionProgress?'  ·  ATTRACT POLICE ATTENTION FIRST':'')+'  ·  REWARD $'+m.reward;$('healthFill').style.width=clamp(player.hp,0,100)+'%';$('status').textContent='HEALTH · '+Math.ceil(player.hp)+(player.vehicle?'   |   SPEED '+Math.floor(Math.abs(player.vehicle.s)/4):'   |   ON FOOT');
 if(clock>toastUntil)$('toast').style.opacity=0}
 function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h)}
 function draw(){ctx.fillStyle='#142c34';ctx.fillRect(0,0,W,H);ctx.save();ctx.translate(W/2-camera.x,H/2-camera.y);
