@@ -120,7 +120,7 @@ saveTimer+=dt;if(saveTimer>20){saveTimer=0;save()}
 $('cash').textContent='$ '+Math.floor(player.money).toLocaleString();$('wanted').textContent='★'.repeat(player.wanted)+'☆'.repeat(5-player.wanted);$('wanted').style.color=player.wanted?'#ffae62':'#b9c9d8';
 const targetDistance=m.x!==undefined?Math.round(dist(player,m)):null;
 const progressHint=targetDistance!==null?'  ·  '+targetDistance+'m TO TARGET':m.type==='survive'?'  ·  '+Math.max(0,Math.ceil(45-missionTimer))+'s REMAINING':m.type==='escape'?(missionProgress?'  ·  BREAK LINE OF SIGHT':'  ·  ATTRACT POLICE ATTENTION FIRST'):'';
-$('mission').textContent=m.text+progressHint+'  ·  REWARD ;$('status').textContent='HEALTH · '+Math.ceil(player.hp)+(player.vehicle?'   |   SPEED '+Math.floor(Math.abs(player.vehicle.s)/4):'   |   ON FOOT');
+$('mission').textContent=m.text+progressHint+'  ·  REWARD $'+m.reward;$('status').textContent='HEALTH · '+Math.ceil(player.hp)+(player.vehicle?'   |   SPEED '+Math.floor(Math.abs(player.vehicle.s)/4):'   |   ON FOOT');
 if(clock>toastUntil)$('toast').style.opacity=0}
 function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h)}
 function draw(){ctx.fillStyle='#142c34';ctx.fillRect(0,0,W,H);ctx.save();ctx.translate(W/2-camera.x,H/2-camera.y);
