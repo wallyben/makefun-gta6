@@ -73,7 +73,7 @@ for(let step=0;step<steps;step++){
 if(crashed){if(Math.abs(c.s)>95){hit(Math.min(24,Math.abs(c.s)*.055));sparks.push({x:c.x,y:c.y,life:.5})}c.s*=-.22}
 player.x=c.x;player.y=c.y;player.a=c.a;
 if(Math.abs(c.s)>260&&Math.random()<dt*.8)sparks.push({x:c.x,y:c.y,life:.3})}
-else{const speed=keys.has('shift')?205:130;const dx=(right?1:0)-(left?1:0),dy=(down?1:0)-(up?1:0),len=Math.hypot(dx,dy)||1;player.x+=dx/len*speed*dt;player.y+=dy/len*speed*dt;if(dx||dy)player.a=Math.atan2(dx,-dy);if(keys.has(' ')&&Math.random()<dt*3){for(const p of police)if(dist(p,player)<60){p.hp-=25;player.wanted=Math.max(2,player.wanted);player.heat=40;sparks.push({x:p.x,y:p.y,life:.5})}}}
+else{const speed=keys.has('shift')?205:130;const dx=(right?1:0)-(left?1:0),dy=(down?1:0)-(up?1:0),len=Math.hypot(dx,dy)||1;const moveX=dx/len*speed*dt,moveY=dy/len*speed*dt,steps=Math.max(1,Math.ceil(Math.hypot(moveX,moveY)/5));for(let step=0;step<steps;step++){const nextX=player.x+moveX/steps,nextY=player.y+moveY/steps;if(canMove(nextX,player.y,7))player.x=nextX;if(canMove(player.x,nextY,7))player.y=nextY}if(dx||dy)player.a=Math.atan2(dx,-dy);if(keys.has(' ')&&Math.random()<dt*3){for(const p of police)if(dist(p,player)<60){p.hp-=25;player.wanted=Math.max(2,player.wanted);player.heat=40;sparks.push({x:p.x,y:p.y,life:.5})}}}
 player.x=clamp(player.x,-WORLD,WORLD);player.y=clamp(player.y,-WORLD,WORLD);
 // Keep vehicle position synchronized with world bounds, preventing camera/vehicle divergence.
 if(player.vehicle){player.vehicle.x=player.x;player.vehicle.y=player.y}
