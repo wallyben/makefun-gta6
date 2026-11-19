@@ -64,7 +64,14 @@ function interact(){if(player.vehicle){const v=player.vehicle;const offsets=[{x:
 function hit(damage){if(player.invulnerable>0)return;player.hp-=damage;player.invulnerable=1.3;sparks.push({x:player.x,y:player.y,life:.5});if(player.hp<=0){player.hp=100;player.x=START.x;player.y=START.y;player.vehicle=null;player.money=Math.max(0,player.money-500);player.wanted=0;police.length=0;notify('WASTED  ·  HOSPITAL FEE $500')}}
 function update(dt){clock+=dt;player.invulnerable=Math.max(0,player.invulnerable-dt);const oldX=player.x,oldY=player.y;
 const up=keys.has('w')||keys.has('arrowup'),down=keys.has('s')||keys.has('arrowdown'),left=keys.has('a')||keys.has('arrowleft'),right=keys.has('d')||keys.has('arrowright');
-if(player.vehicle){const c=player.vehicle;c.s=clamp(c.s+(up?320*dt:0)-(down?260*dt:0),-135,430);c.s*=Math.exp(-(keys.has(' ')?4.8:.75)*dt);c.a+=(right?1:0)*c.s*dt/100-(left?1:0)*c.s*dt/100;c.x+=Math.sin(c.a)*c.s*dt;c.y-=Math.cos(c.a)*c.s*dt;player.x=c.x;player.y=c.y;player.a=c.a;
+if(player.vehicle){const c=player.vehicle;c.s=clamp(c.s+(up?320*dt:0)-(down?260*dt:0),-135,430);c.s*=Math.exp(-(keys.has(' ')?4.8:.75)*dt);c.a+=(right?1:0)*c.s*dt/100-(left?1:0)*c.s*dt/100;const travel=c.s*dt,steps=Math.max(1,Math.ceil(Math.abs(travel)/8));let crashed=false;
+for(let step=0;step<steps;step++){
+ const nx=c.x+Math.sin(c.a)*travel/steps,ny=c.y-Math.cos(c.a)*travel/steps;
+ if(!canMove(nx,ny,12)){crashed=true;break}
+ c.x=nx;c.y=ny;
+}
+if(crashed){if(Math.abs(c.s)>95){hit(Math.min(24,Math.abs(c.s)*.055));sparks.push({x:c.x,y:c.y,life:.5})}c.s*=-.22}
+player.x=c.x;player.y=c.y;player.a=c.a;
 if(Math.abs(c.s)>260&&Math.random()<dt*.8)sparks.push({x:c.x,y:c.y,life:.3})}
 else{const speed=keys.has('shift')?205:130;const dx=(right?1:0)-(left?1:0),dy=(down?1:0)-(up?1:0),len=Math.hypot(dx,dy)||1;player.x+=dx/len*speed*dt;player.y+=dy/len*speed*dt;if(dx||dy)player.a=Math.atan2(dx,-dy);if(keys.has(' ')&&Math.random()<dt*3){for(const p of police)if(dist(p,player)<60){p.hp-=25;player.wanted=Math.max(2,player.wanted);player.heat=40;sparks.push({x:p.x,y:p.y,life:.5})}}}
 player.x=clamp(player.x,-WORLD,WORLD);player.y=clamp(player.y,-WORLD,WORLD);
