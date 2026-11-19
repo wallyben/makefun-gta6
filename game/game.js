@@ -99,7 +99,18 @@ if(Math.abs(c.x)>WORLD||Math.abs(c.y)>WORLD){c.x=clamp(c.x,-WORLD,WORLD);c.y=cla
 if(Math.abs(((c.x+TILE/2)%TILE+TILE)%TILE-TILE/2)<4&&Math.abs(((c.y+TILE/2)%TILE+TILE)%TILE-TILE/2)<4&&Math.random()<.15){c.a+=Math.random()<.5?Math.PI/2:-Math.PI/2}
 if(dist(c,player)<22&&player.vehicle&&Math.abs(player.vehicle.s)>80){hit(10);player.wanted=Math.max(1,player.wanted);player.heat=30}}
 for(const p of people){if(dist(p,player)>800)continue;const d=Math.hypot(p.tx-p.x,p.ty-p.y);if(d<8){p.tx=p.x+rnd(-100,100);p.ty=p.y+rnd(-100,100)}else{p.x+=(p.tx-p.x)/d*p.speed*dt;p.y+=(p.ty-p.y)/d*p.speed*dt}if(player.vehicle&&Math.abs(player.vehicle.s)>70&&dist(p,player)<18){player.wanted=Math.max(2,player.wanted);player.heat=55;p.x+=rnd(-60,60);p.y+=rnd(-60,60)}}
-if(player.wanted>0){player.heat-=dt;if(player.heat<=0){player.wanted--;player.heat=18;notify(player.wanted?'HEAT FADING':'WANTED LEVEL CLEARED')}const desired=Math.min(2+player.wanted*2,10);while(police.length<desired){const a=rnd(-Math.PI,Math.PI);police.push({x:player.x+Math.cos(a)*rnd(500,700),y:player.y+Math.sin(a)*rnd(500,700),hp:100,a:0})}}
+if(player.wanted>0){player.heat-=dt;if(player.heat<=0){player.wanted--;player.heat=18;notify(player.wanted?'HEAT FADING':'WANTED LEVEL CLEARED')}const desired=Math.min(2+player.wanted*2,10);while(police.length<desired){
+ // Spawn pursuit units on reachable streets inside the playable city, not inside
+ // buildings or beyond the world edge where pathing can never recover.
+ let spawn=null;
+ for(let attempt=0;attempt<24;attempt++){
+  const angle=rnd(-Math.PI,Math.PI),range=rnd(320,650);
+  const candidate=nearestSafe(clamp(player.x+Math.cos(angle)*range,-WORLD+20,WORLD-20),clamp(player.y+Math.sin(angle)*range,-WORLD+20,WORLD-20),12);
+  if(canMove(candidate.x,candidate.y,12)&&dist(candidate,player)>180){spawn=candidate;break}
+ }
+ if(!spawn)break;
+ police.push({x:spawn.x,y:spawn.y,hp:100,a:0});
+}}
 else police.length=0;
 for(let i=police.length-1;i>=0;i--){const p=police[i];if(p.hp<=0){police.splice(i,1);continue}const d=dist(p,player);p.a=Math.atan2(player.x-p.x,-(player.y-p.y));if(d>30){const step=Math.min(150+player.wanted*20,d)*dt,dx=Math.sin(p.a)*step,dy=-Math.cos(p.a)*step;const count=Math.max(1,Math.ceil(step/5));for(let n=0;n<count;n++){if(canMove(p.x+dx/count,p.y,7))p.x+=dx/count;if(canMove(p.x,p.y+dy/count,7))p.y+=dy/count}}else hit(14)}
 const m=missions[mission%missions.length];if(m.type==='drive'&&player.vehicle&&dist(player,m)<90)advance();if(m.type==='reach'&&dist(player,m)<90)advance();if(m.type==='deliver'&&player.vehicle&&dist(player,m)<90)advance();if(m.type==='escape'){if(player.wanted>0)missionProgress=1;if(missionProgress===1&&player.wanted===0)advance();}if(m.type==='survive'){player.wanted=Math.max(player.wanted,3);player.heat=20;missionTimer+=dt;if(missionTimer>=45){player.wanted=0;advance()}}
