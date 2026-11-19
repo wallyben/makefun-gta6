@@ -20,7 +20,7 @@ test('game boots in simulated browser and advances one frame without exceptions'
  const ctx={setTransform(){},fillRect(){},save(){},restore(){},translate(){},rotate(){},beginPath(){},ellipse(){},arc(){},fill(){},stroke(){},fillText(){},strokeRect(){}};
  function element(id){if(!nodes.has(id))nodes.set(id,{id,style:{},textContent:'',hidden:false,onclick:null,getContext(){return ctx}});return nodes.get(id)}
  let raf=null;const listeners={};const store=new Map();
- const context={document:{getElementById:element},window:{innerWidth:1280,innerHeight:720,devicePixelRatio:1},addEventListener(name,fn){listeners[name]=fn},requestAnimationFrame(fn){raf=fn},performance:{now:()=>1000},localStorage:{setItem(k,v){store.set(k,v)},getItem(k){return store.get(k)||null}},Math,Set,JSON,Number,Date,console};
+ const context={document:{getElementById:element,querySelectorAll(){return []}},window:{innerWidth:1280,innerHeight:720,devicePixelRatio:1},addEventListener(name,fn){listeners[name]=fn},requestAnimationFrame(fn){raf=fn},performance:{now:()=>1000},localStorage:{setItem(k,v){store.set(k,v)},getItem(k){return store.get(k)||null}},Math,Set,JSON,Number,Date,console};
  vm.runInNewContext(source,context,{filename:'game.js',timeout:3000});
  assert.equal(typeof element('start').onclick,'function');
  element('start').onclick();
@@ -43,7 +43,7 @@ test('pause and resume prevent gameplay input while paused',()=>{
  const ctx={setTransform(){},fillRect(){},save(){},restore(){},translate(){},rotate(){},beginPath(){},ellipse(){},arc(){},fill(){},stroke(){},fillText(){},strokeRect(){}};
  function element(id){if(!nodes.has(id))nodes.set(id,{style:{},textContent:'',hidden:false,getContext(){return ctx}});return nodes.get(id)}
  let raf;const listeners={};const storage=new Map();
- vm.runInNewContext(source,{document:{getElementById:element},window:{innerWidth:1000,innerHeight:700,devicePixelRatio:1},addEventListener:(n,f)=>listeners[n]=f,requestAnimationFrame:f=>raf=f,performance:{now:()=>1000},localStorage:{setItem:(k,v)=>storage.set(k,v),getItem:k=>storage.get(k)||null},Math,Set,JSON,Number,Date,console},{timeout:3000});
+ vm.runInNewContext(source,{document:{getElementById:element,querySelectorAll(){return []}},window:{innerWidth:1000,innerHeight:700,devicePixelRatio:1},addEventListener:(n,f)=>listeners[n]=f,requestAnimationFrame:f=>raf=f,performance:{now:()=>1000},localStorage:{setItem:(k,v)=>storage.set(k,v),getItem:k=>storage.get(k)||null},Math,Set,JSON,Number,Date,console},{timeout:3000});
  element('start').onclick();
  raf(1016);
  listeners.keydown({key:'Escape',repeat:false,preventDefault(){}});
