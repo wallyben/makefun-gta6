@@ -30,9 +30,36 @@ function notify(t){$('toast').textContent=t;$('toast').style.opacity=1;toastUnti
 function advance(){const m=missions[mission%missions.length];player.money+=m.reward;notify('CONTRACT COMPLETE  +$'+m.reward);mission++;missionProgress=0;missionTimer=0;save()}
 function save(){try{localStorage.setItem('neonCountySaveV1',JSON.stringify({x:player.x,y:player.y,money:player.money,hp:player.hp,wanted:player.wanted,mission}))}catch{}}
 function load(){try{const d=JSON.parse(localStorage.getItem('neonCountySaveV1')||'null');if(!d)return false;for(const k of ['x','y','money','hp','wanted'])if(Number.isFinite(d[k]))player[k]=d[k];mission=Number.isInteger(d.mission)?Math.max(0,d.mission):0;const safe=nearestSafe(player.x,player.y);player.x=safe.x;player.y=safe.y;return true}catch{return false}}
-function start(restore){keys.clear();player.vehicle=null;player.heat=0;player.invulnerable=0;police.length=0;missionTimer=0;missionProgress=0;if(restore){if(!load()){Object.assign(player,{x:START.x,y:START.y,a:0,hp:100,money:500,wanted:0});mission=0;notify('NO SAVE FOUND — NEW GAME')}}else{Object.assign(player,{x:START.x,y:START.y,a:0,hp:100,money:500,wanted:0});mission=0;save()}$('menu').hidden=true;$('pause').hidden=true;paused=false;playing=true;last=performance.now();if(!frameScheduled){frameScheduled=true;requestAnimationFrame(frame)}}
+function start(restore){keys.clear();heldPointers.clear();player.vehicle=null;player.heat=0;player.invulnerable=0;police.length=0;missionTimer=0;missionProgress=0;if(restore){if(!load()){Object.assign(player,{x:START.x,y:START.y,a:0,hp:100,money:500,wanted:0});mission=0;notify('NO SAVE FOUND — NEW GAME')}}else{Object.assign(player,{x:START.x,y:START.y,a:0,hp:100,money:500,wanted:0});mission=0;save()}$('menu').hidden=true;$('pause').hidden=true;paused=false;playing=true;last=performance.now();if(!frameScheduled){frameScheduled=true;requestAnimationFrame(frame)}}
 $('start').onclick=()=>start(false);$('resume').onclick=()=>start(true);
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(!playing)return;if(paused&&k!=='escape')return;keys.add(k);if(k==='e'&&!e.repeat)interact();if(k==='p'&&!e.repeat){save();notify('GAME SAVED')}if(k==='escape'&&!e.repeat){paused=!paused;keys.clear();$('pause').hidden=!paused;if(!paused)last=performance.now()}});addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+// Pointer-based controls support simultaneous steering and throttle on touchscreens.
+const touchButtons=document.querySelectorAll('#touch [data-key]');
+const heldPointers=new Map();
+function virtualKey(key,down){
+ if(key==='escape'){if(down&&playing){paused=!paused;keys.clear();heldPointers.clear();$('pause').hidden=!paused;last=performance.now()}return}
+ if(!playing||paused)return;
+ if(key==='e'){if(down)interact();return}
+ if(down)keys.add(key);else keys.delete(key);
+}
+for(const button of touchButtons){
+ button.addEventListener('pointerdown',event=>{
+  event.preventDefault();
+  const key=button.dataset.key;
+  button.setPointerCapture(event.pointerId);
+  heldPointers.set(event.pointerId,key);
+  virtualKey(key,true);
+ });
+ const release=event=>{
+  const key=heldPointers.get(event.pointerId);
+  if(key===undefined)return;
+  heldPointers.delete(event.pointerId);
+  if(![...heldPointers.values()].includes(key))virtualKey(key,false);
+ };
+ button.addEventListener('pointerup',release);
+ button.addEventListener('pointercancel',release);
+ button.addEventListener('lostpointercapture',release);
+}
 function interact(){if(player.vehicle){const v=player.vehicle;const offsets=[{x:v.x+Math.cos(v.a)*28,y:v.y+Math.sin(v.a)*28},{x:v.x-Math.cos(v.a)*28,y:v.y-Math.sin(v.a)*28},{x:v.x+Math.sin(v.a)*30,y:v.y-Math.cos(v.a)*30}];const exit=offsets.find(p=>canMove(p.x,p.y,7));if(!exit){notify('NO SAFE PLACE TO EXIT');return}player.x=exit.x;player.y=exit.y;player.vehicle=null;notify('ON FOOT');return}let nearest=null,best=48;for(const c of cars){const d=dist(player,c);if(d<best){best=d;nearest=c}}if(!nearest){notify('GET CLOSER TO A VEHICLE');return}player.vehicle=nearest;nearest.ai=false;nearest.stolen=true;player.x=nearest.x;player.y=nearest.y;player.a=nearest.a;player.wanted=Math.max(1,player.wanted);player.heat=40;notify('VEHICLE TAKEN  ·  WANTED');if(mission%missions.length===0)advance()}
 function hit(damage){if(player.invulnerable>0)return;player.hp-=damage;player.invulnerable=1.3;sparks.push({x:player.x,y:player.y,life:.5});if(player.hp<=0){player.hp=100;player.x=START.x;player.y=START.y;player.vehicle=null;player.money=Math.max(0,player.money-500);player.wanted=0;police.length=0;notify('WASTED  ·  HOSPITAL FEE $500')}}
 function update(dt){clock+=dt;player.invulnerable=Math.max(0,player.invulnerable-dt);const oldX=player.x,oldY=player.y;
