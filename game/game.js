@@ -33,6 +33,14 @@ function load(){try{const d=JSON.parse(localStorage.getItem('neonCountySaveV1')|
 function start(restore){keys.clear();heldPointers.clear();player.vehicle=null;player.heat=0;player.invulnerable=0;police.length=0;missionTimer=0;missionProgress=0;if(restore){if(!load()){Object.assign(player,{x:START.x,y:START.y,a:0,hp:100,money:500,wanted:0});mission=0;notify('NO SAVE FOUND — NEW GAME')}}else{Object.assign(player,{x:START.x,y:START.y,a:0,hp:100,money:500,wanted:0});mission=0;save()}$('menu').hidden=true;$('pause').hidden=true;paused=false;playing=true;last=performance.now();if(!frameScheduled){frameScheduled=true;requestAnimationFrame(frame)}}
 $('start').onclick=()=>start(false);$('resume').onclick=()=>start(true);
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(!playing)return;if(paused&&k!=='escape')return;keys.add(k);if(k==='e'&&!e.repeat)interact();if(k==='p'&&!e.repeat){save();notify('GAME SAVED')}if(k==='escape'&&!e.repeat){paused=!paused;keys.clear();$('pause').hidden=!paused;if(!paused)last=performance.now()}});addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+// Losing focus must never leave the throttle, steering, or attack held down.
+// Pause the simulation so a player returning from another tab does not lose a mission.
+function suspendControls(){
+ keys.clear();heldPointers.clear();
+ if(playing&&!paused){paused=true;$('pause').hidden=false}
+}
+addEventListener('blur',suspendControls);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)suspendControls()});
 // Pointer-based controls support simultaneous steering and throttle on touchscreens.
 const touchButtons=document.querySelectorAll('#touch [data-key]');
 const heldPointers=new Map();
