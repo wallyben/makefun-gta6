@@ -48,3 +48,30 @@ jobs:
           name: submission-preflight
           path: submission-preflight.json
           retention-days: 7
+
+  eligibility:
+    name: Submission eligibility (strict)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify required submission artifacts
+        shell: bash
+        run: |
+          set +e
+          node scripts/submission-preflight.mjs > submission-preflight-strict.json
+          result=$?
+          cat submission-preflight-strict.json
+          echo "Official submission preflight exit code: $result" >> "$GITHUB_STEP_SUMMARY"
+          exit "$result"
+      - name: Upload strict eligibility report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: submission-preflight-strict
+          path: submission-preflight-strict.json
+          if-no-files-found: warn
+          retention-days: 7
