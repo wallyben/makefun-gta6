@@ -15,7 +15,7 @@ test('touch controls match game bindings and are exposed in the interface', () =
 
 test('multitouch keys release independently and pause blocks touch input', () => {
   const nodes = new Map(), listeners = {};
-  const ctx = {setTransform(){},fillRect(){},save(){},restore(){},translate(){},rotate(){},beginPath(){},ellipse(){},arc(){},fill(){},stroke(){},fillText(){},strokeRect(){}};
+  const ctx = {setTransform(){},fillRect(){},save(){},restore(){},translate(){},rotate(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},ellipse(){},arc(){},fill(){},stroke(){},fillText(){},strokeRect(){}};
   const buttons = ['w','a','s','d','e',' ','shift','escape'].map(key => ({
     dataset:{key}, handlers:{}, setPointerCapture(){},
     addEventListener(name,fn){this.handlers[name]=fn;}
@@ -26,7 +26,7 @@ test('multitouch keys release independently and pause blocks touch input', () =>
   };
   let raf, now=1000;
   const context = {
-    document:{getElementById:element,querySelectorAll(){return buttons;}},
+    document:{getElementById:element,querySelectorAll(){return buttons;},addEventListener(name,fn){listeners['document:'+name]=fn;}},
     window:{innerWidth:1280,innerHeight:720,devicePixelRatio:1},
     addEventListener(name,fn){listeners[name]=fn;},
     requestAnimationFrame(fn){raf=fn;},
