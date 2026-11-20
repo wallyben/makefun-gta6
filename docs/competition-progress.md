@@ -48,3 +48,10 @@ Baseline: no persistent `docs/competition-progress.md`; root `main.ts` and vendo
 - **Acceptance:** create and re-fetch a concise, official-source-based operator runbook for acquiring the exact kit and starting a *new* recorded Codex session before eligible code writes. This does not itself satisfy eligibility.
 - **Commit:** 4e066b176aed3d625e9c0c1a8d3bd2269eaaadd8 adds docs/recorded-build-runbook.md. No game changes, CI success, or browser test claimed.
 - **Next highest-value action:** user/local recorded agent session with Node >=22.18 and official kit; integrate main.ts/vendor and collect genuine browser evidence. **NOT READY**.
+
+## 2026-11-20 02:10 UTC — P1 CI syntax failure and source duplication
+- Baseline: push workflow run 44651976016 for d572ffa **failed**, step `Verify offline game and scripts`; job log identifies `game/game.js:147 SyntaxError: Unexpected token '}'`. This is not a missing status: confirmed failure. https://github.com/wallyben/makefun-gta6/actions/runs/44651976016
+- Source inspection: `game/game.js` had a complete first IIFE ending at line 145 followed by 33,210 characters of duplicated/stray appended JavaScript. The duplicate tail caused the parser failure. Removed the tail and retained the first complete game source; corrected the IIFE terminator in follow-up commit.
+- Commits: bdbc8328c3a0997323bfc099877848e52b770542 (remove appended duplicate), 1472a18759c3ee8cdfcc1d9662f296ff5234101d (correct terminator). Source after second commit ends with `})();`.
+- Acceptance pending: CI on **1472a18** must show passing `node --check game/game.js`, `node --check game.js`, and all tests. At inspection, only bdbc832 runs were queued; do NOT call this repaired or passing until CI confirms. No browser playtest performed.
+- Eligibility P0 still blocked: root main.ts, unchanged vendor, authentic screenshots, sealed recorded agent provenance. Next: inspect latest HEAD push CI and fix any remaining failure before new features; obtain official recorded development session and kit integration. Readiness: NOT READY.
