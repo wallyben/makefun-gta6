@@ -40,3 +40,11 @@ Baseline: no persistent `docs/competition-progress.md`; root `main.ts` and vendo
 - **Verified runtime prerequisite:** Node >=22.18 required; this automation's local container reports v22.16.0, so it cannot validate `main.ts` against the required runtime here. Local container also cannot resolve github.com, so it cannot clone the repository or run a real browser playtest. GitHub connector is usable for source/commit operations.
 - **P0 user-side action:** Start official kit recorder on a computer with Node >=22.18 and Chrome, launch a new supported agent session AFTER recorder starts, and have that agent perform genuine eligible development. Seal recording with kit. Never claim existing unrecorded commits qualify.
 - **Acceptance this run:** persist newly verified official eligibility details and environment limitations in this ledger. No gameplay quality improvement or CI pass claimed. Next task: obtain official kit bytes and create exact vendor + main.ts under a properly recorded session; run kit check and capture genuine browser screenshots. Status: NOT READY.
+
+## This run: 2026-11-20 01:13 UTC — recorded-build operator path
+- **HEAD at start:** 67059e31f1d49dc62084596bf0c2e74f04641a9a (GitHub commit search).
+- **Official bounty checked live:** https://make.fun/bounty/gta6-01 ; https://make.fun/api/competitions/gta6-01/requirements. Deadline 2026-11-24 15:00 UTC unchanged. Required Node >=22.18 and recorded supported agent session.
+- **P0 baseline:** root main.ts and vendor/makefun-game.ts both returned GitHub 404. Official kit unavailable in this container (DNS failure to make.fun); Node v22.16.0, below required runtime. No authentic screenshots or sealed recording verified.
+- **Acceptance:** create and re-fetch a concise, official-source-based operator runbook for acquiring the exact kit and starting a *new* recorded Codex session before eligible code writes. This does not itself satisfy eligibility.
+- **Commit:** 4e066b176aed3d625e9c0c1a8d3bd2269eaaadd8 adds docs/recorded-build-runbook.md. No game changes, CI success, or browser test claimed.
+- **Next highest-value action:** user/local recorded agent session with Node >=22.18 and official kit; integrate main.ts/vendor and collect genuine browser evidence. **NOT READY**.
